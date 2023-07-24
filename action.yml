@@ -1,0 +1,48 @@
+
+name: 'Dependabot Group Merge Approve Action'
+description: 'Automatically group dependabot pull requests into one and approve merge'
+author: 'kuvaus'
+branding:
+  color: "green"
+  icon: "file-text"
+
+inputs:
+  prefix:
+    description: 'Branch prefix to find combinable PRs based on'
+    required: false
+  require_green:
+    description: 'Only combine PRs that are green (status is success). Set to false if repo does not run checks'
+    required: false    
+  combined_pr_name:
+    description: 'Name of the branch to combine PRs into'
+    required: false    
+  ignore:
+    description: 'Exclude PRs with this label'
+    required: false
+
+# runs:
+#   using: node16
+#   main: dist/index.js
+
+
+# This part is temporary to enable Node 20 support
+
+runs:
+  using: composite
+  steps:
+
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version || '20' }}
+
+    - name: Action
+      run: |
+        node ${{ github.action_path }}/dist/index.js
+        echo "::set-output name=releasenotes::value1"
+      shell: ${{ (runner.os == 'Windows' && 'pwsh') || 'bash' }}
+      env:
+        INPUT_PREFIX:           ${{ inputs.prefix }}
+        INPUT_REQUIRE_GREEN     ${{ inputs.require_green }}
+        INPUT_COMBINED_PR_NAME: ${{ inputs.combined_pr_name }}
+        INPUT_IGNORE:           ${{ inputs.ignore }}
