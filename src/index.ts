@@ -20,7 +20,7 @@ async function parse_options() {
         prefix:            core.getInput('prefix')           || 'dependabot',
         require_green:     core.getInput('require_green')    || 'true',
         combined_pr_name:  core.getInput('combined_pr_name') || 'combined',
-        ignore:            core.getInput('ignore')           || 'nocombine',
+        ignore:            core.getInput('ignore')           || 'ignore',
     };
     
     console.log(options);
