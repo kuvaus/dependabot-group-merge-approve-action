@@ -11,9 +11,9 @@ Automatically group dependabot pull requests into one and approve merge.
 
 ```yaml
 jobs:
-  releasenotes:
+  dependabot:
     runs-on: ubuntu-latest
-    name: Group Depenadabot PRs
+    name: Combine dependabot pull requests
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -34,19 +34,21 @@ Optionally there are `inputs` that you can change to modify the actions behavior
 
 ```yaml
 jobs:
-  releasenotes:
+  dependabot:
     runs-on: ubuntu-latest
-    name: Group Depenadabot PRs
+    name: Combine dependabot pull requests
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Group Depenadabot PRs
+      - name: Combine dependabot pull requests
         uses: kuvaus/dependabot-group-merge-approve-action@v1
         with:
           prefix: "dependabot" # Prefix to find the pull requests.
-          require_green: "True" # Require the pull requests to be green
+          require_green: "frue" # Require the pull requests to be green
           combined_pr_name: "combined" # Branch name for the combined pull request
           ignore: "ignore" # Ignore pull requests with this name
+          close_merged: "false" # Close merged pull requests automatically
+          auto_merge_combined: "false" # Automatically merge the combined pull request
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_KEY }}
 ```
