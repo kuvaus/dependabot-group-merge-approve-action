@@ -4,7 +4,7 @@ description: 'Automatically group dependabot pull requests into one and approve 
 author: 'kuvaus'
 branding:
   color: "green"
-  icon: "file-text"
+  icon: "git-pull-request"
 
 inputs:
   prefix:
@@ -19,7 +19,10 @@ inputs:
   ignore:
     description: 'Ignore pull requests with this name'
     required: false
-
+  close_merged:
+    description: 'Close merged pull requests automatically'
+    required: false
+    
 # runs:
 #   using: node16
 #   main: dist/index.js
@@ -43,6 +46,8 @@ runs:
       shell: ${{ (runner.os == 'Windows' && 'pwsh') || 'bash' }}
       env:
         INPUT_PREFIX:           ${{ inputs.prefix }}
-        INPUT_REQUIRE_GREEN:     ${{ inputs.require_green }}
+        INPUT_REQUIRE_GREEN:    ${{ inputs.require_green }}
         INPUT_COMBINED_PR_NAME: ${{ inputs.combined_pr_name }}
         INPUT_IGNORE:           ${{ inputs.ignore }}
+        INPUT_CLOSE_MERGED:     ${{ inputs.close_merged }}
+
