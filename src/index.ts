@@ -10,20 +10,22 @@ const owner = context.repo.owner;
 const repo = context.repo.repo;
 
 interface Options {
-    prefix:            string;
-    require_green:     string;
-    combined_pr_name:  string;
-    ignore:            string;
-    close_merged:      string;
+    prefix:              string;
+    require_green:       string;
+    combined_pr_name:    string;
+    ignore:              string;
+    close_merged:        string;
+    auto_merge_combined: string;
 }
 
 async function parse_options() {
     const options: Options = {
-        prefix:            core.getInput('prefix')           || 'dependabot',
-        require_green:     core.getInput('require_green')    || 'true',
-        combined_pr_name:  core.getInput('combined_pr_name') || 'combined',
-        ignore:            core.getInput('ignore')           || 'ignore',
-        close_merged:      core.getInput('close_merged')     || 'false',
+        prefix:              core.getInput('prefix')              || 'dependabot',
+        require_green:       core.getInput('require_green')       || 'true',
+        combined_pr_name:    core.getInput('combined_pr_name')    || 'combined',
+        ignore:              core.getInput('ignore')              || 'ignore',
+        close_merged:        core.getInput('close_merged')        || 'false',
+        auto_merge_combined: core.getInput('auto_merge_combined') || 'false',
     };
     
     console.log(options);
@@ -93,27 +95,6 @@ async function create_combined_pull_request(options: Options, combined_prs: stri
     console.log(`No pull requests to combine`);
     return;
   }
-  
-  const combined_prs_string = combined_prs.join('\n');
-  let body = 'This pull request contains the following pull requests:\n' + combined_prs_string;
-
-  await octokit.request('POST /repos/{owner}/{repo}/pulls', {
-    owner: owner,
-    repo: repo,
-    title: 'Combined pull request',
-    head: options.combined_pr_name,
-    base: base_branch,
-    body: body
-  });
-}
-*/
-
-async function create_combined_pull_request(options: Options, combined_prs: string[], base_branch: string) {
-  // Check if there are any PRs to combine
-  if (combined_prs.length === 0) {
-    console.log(`No pull requests to combine`);
-    return;
-  }
 
   const combined_prs_string = combined_prs.join('\n');
   let body = 'This pull request contains the following pull requests:\n' + combined_prs_string;
@@ -148,6 +129,81 @@ async function create_combined_pull_request(options: Options, combined_prs: stri
     });
   }
 }
+*/
+
+async function create_combined_pull_request(options: Options, combined_prs: string[], base_branch: string) {
+  // Check if there are any PRs to combine
+  if (combined_prs.length === 0) {
+    console.log(`No pull requests to combine`);
+    return;
+  }
+
+  const combined_prs_string = combined_prs.join('\n');
+
+  // Check if a pull request already exists
+  const existingPRs = await octokit.pulls.list({
+    owner: owner,
+    repo: repo,
+    state: 'open',
+    head: owner + ':' + options.combined_pr_name
+  });
+
+  let pr_number;
+  if (existingPRs.data.length > 0) {
+    console.log(`Updating existing pull request`);
+    const existingPR = existingPRs.data[0];
+
+    // Get the existing body and append the new pull requests
+    let body = existingPR.body + '\n' + combined_prs_string;
+
+    await octokit.pulls.update({
+      owner: owner,
+      repo: repo,
+      pull_number: existingPR.number,
+      title: 'Combined pull request',
+      body: body,
+      state: 'open'
+    });
+    pr_number = existingPR.number;
+  } else {
+    let body = 'This pull request contains the following pull requests:\n' + combined_prs_string;
+    const pull_request = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
+      owner: owner,
+      repo: repo,
+      title: 'Combined pull request',
+      head: options.combined_pr_name,
+      base: base_branch,
+      body: body
+    });
+    pr_number = pull_request.data.number;
+  }
+
+  if (options.auto_merge_combined === 'true') {
+    await auto_merge_combined_pull_request(pr_number);
+  }
+}
+
+
+async function auto_merge_combined_pull_request(pr_number: number) {
+  try {
+    const merge_result = await octokit.pulls.merge({
+      owner: owner,
+      repo: repo,
+      pull_number: pr_number
+    });
+
+    if (merge_result.status === 204) {
+        console.log(`Pull request #${pr_number} merged successfully`);
+        return true;
+    } else {
+        console.log(`Failed to merge pull request #${pr_number}`);
+        return false;
+    }
+  } catch (error) {
+    console.log(`Error merging pull request #${pr_number}: ${error}`);
+    return false;
+  }
+}
 
 
 async function main() {
@@ -160,7 +216,6 @@ async function main() {
   for (const pull of pulls) {
     // Only merge pull requests that have a branch name starting with the prefix specified in the options.prefix
     if (!pull.head.ref.startsWith(options.prefix)) {
-      console.log(pull.head.ref);
       continue;
     }
 
