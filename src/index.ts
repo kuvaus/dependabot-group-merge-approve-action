@@ -192,7 +192,7 @@ async function auto_merge_combined_pull_request(pr_number: number) {
       pull_number: pr_number
     });
 
-    if (merge_result.status === 204) {
+    if ((merge_result.status as 200 | 204) === 204) {
         console.log(`Pull request #${pr_number} merged successfully`);
         return true;
     } else {
@@ -204,6 +204,7 @@ async function auto_merge_combined_pull_request(pr_number: number) {
     return false;
   }
 }
+
 
 
 async function main() {
