@@ -43,6 +43,6 @@ runs:
       shell: ${{ (runner.os == 'Windows' && 'pwsh') || 'bash' }}
       env:
         INPUT_PREFIX:           ${{ inputs.prefix }}
-        INPUT_REQUIRE_GREEN     ${{ inputs.require_green }}
+        INPUT_REQUIRE_GREEN:     ${{ inputs.require_green }}
         INPUT_COMBINED_PR_NAME: ${{ inputs.combined_pr_name }}
         INPUT_IGNORE:           ${{ inputs.ignore }}
