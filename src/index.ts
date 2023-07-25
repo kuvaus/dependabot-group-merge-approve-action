@@ -122,21 +122,25 @@ async function main() {
   const base_sha = pulls[0].base.sha;
   await create_combined_branch(options, base_sha);
 
+  console.log(pulls);
   let combined_prs = [];
   for (const pull of pulls) {
+    console.log(pull.head.ref);
     // Only merge pull requests that have a branch name starting with the prefix specified in the options.prefix
     if (!pull.head.ref.startsWith(options.prefix)) {
       continue;
+      console.log(pull.head.ref);
     }
 
     // Fetch labels for the pull request
     const labels = await get_pull_request_labels(pull.number);
-
+    console.log(labels);
     // Ignore the pull request if it has a label that matches options.ignore (case-insensitive)
     if (labels.map((label: string) => label.toLowerCase()).includes(options.ignore.toLowerCase())) {
       continue;
     }
 
+    /*
     // If require_green is true, only merge the pull requests if they have the 'success' status
     if (options.require_green === 'true') {
       const status = await octokit.repos.getCombinedStatusForRef({
@@ -145,12 +149,18 @@ async function main() {
         ref: pull.head.ref,
       });
       if (status.data.state !== 'success') {
+        console.log("green success");
         continue;
       }
     }
+    */
 
     const merge_success = await merge_into_combined_branch(options, pull);
-    if (merge_success) combined_prs.push(pull.head.ref);
+    if (options.require_green === 'true') {
+        if (merge_success) combined_prs.push(pull.head.ref);
+    } else {
+        combined_prs.push(pull.head.ref);
+    }
   }
 
   const base_branch = pulls[0].base.ref;
