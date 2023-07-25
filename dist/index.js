@@ -13214,7 +13214,7 @@ function wrappy (fn, cb) {
 /***/ }),
 
 /***/ 6144:
-/***/ (function(module, exports, __nccwpck_require__) {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
@@ -13244,12 +13244,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const rest_1 = __nccwpck_require__(5375);
-const github = __nccwpck_require__(5438);
+const github = __importStar(__nccwpck_require__(5438));
+const token = process.env.GITHUB_TOKEN;
+const octokit = new rest_1.Octokit({ auth: token });
 const context = github.context;
 const owner = context.repo.owner;
 const repo = context.repo.repo;
-const token = process.env.GITHUB_TOKEN;
-const octokit = new rest_1.Octokit({ auth: token });
 async function parse_options() {
     const options = {
         prefix: core.getInput('prefix') || 'dependabot',
@@ -13262,15 +13262,15 @@ async function parse_options() {
 }
 async function get_pull_requests() {
     let response = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
-        owner: 'owner',
-        repo: 'repo'
+        owner: owner,
+        repo: repo
     });
     return response.data;
 }
 async function create_combined_branch(options, base_sha) {
     await octokit.request('POST /repos/{owner}/{repo}/git/refs', {
-        owner: 'owner',
-        repo: 'repo',
+        owner: owner,
+        repo: repo,
         ref: 'refs/heads/' + options.combined_pr_name,
         sha: base_sha
     });
@@ -13278,8 +13278,8 @@ async function create_combined_branch(options, base_sha) {
 async function merge_into_combined_branch(options, branch) {
     try {
         await octokit.request('POST /repos/{owner}/{repo}/merges', {
-            owner: 'owner',
-            repo: 'repo',
+            owner: owner,
+            repo: repo,
             base: options.combined_pr_name,
             head: branch,
         });
@@ -13293,8 +13293,8 @@ async function create_combined_pull_request(options, combined_prs, base_branch) 
     const combined_prs_string = combined_prs.join('\n');
     let body = 'This pull request contains the following pull requests:\n' + combined_prs_string;
     await octokit.request('POST /repos/{owner}/{repo}/pulls', {
-        owner: 'owner',
-        repo: 'repo',
+        owner: owner,
+        repo: repo,
         title: 'Combined pull request',
         head: options.combined_pr_name,
         base: base_branch,
@@ -13319,11 +13319,6 @@ async function main() {
 if (require.main === require.cache[eval('__filename')]) {
     main();
 }
-// module exports for jest tests
-module.exports = {
-    parse_options,
-    main
-};
 
 
 /***/ }),
