@@ -2,9 +2,13 @@
 import * as core from '@actions/core';
 import { Octokit } from "@octokit/rest";
 
+const github = require('@actions/github');
+const context = github.context;
+const owner = context.repo.owner;
+const repo = context.repo.repo;
 const token = process.env.GITHUB_TOKEN;
 const octokit = new Octokit({ auth: token }); 
-    
+   
 interface Options {
     prefix:            string;
     require_green:     string;
