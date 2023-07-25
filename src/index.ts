@@ -38,6 +38,7 @@ async function get_pull_requests() {
   return response.data;
 }
 
+/*
 async function get_pull_request_labels(pull_number: number) {
   let response = await octokit.issues.listLabelsOnIssue({
     owner: owner,
@@ -46,7 +47,7 @@ async function get_pull_request_labels(pull_number: number) {
   });
   return response.data.map((label: any) => label.name);
 }
-
+*/
 
 async function create_combined_branch(options: Options, base_sha: string) {
   try {
@@ -122,16 +123,22 @@ async function main() {
   const base_sha = pulls[0].base.sha;
   await create_combined_branch(options, base_sha);
 
-  console.log(pulls);
   let combined_prs = [];
   for (const pull of pulls) {
     console.log(pull.head.ref);
     // Only merge pull requests that have a branch name starting with the prefix specified in the options.prefix
     if (!pull.head.ref.startsWith(options.prefix)) {
       continue;
-      console.log(pull.head.ref);
     }
 
+    let label = pull.head.label;
+    console.log(label);
+    if (label.toLowerCase().includes(options.ignore.toLowerCase())) {
+      console.log("ignored label");
+      continue;
+    }
+    
+    /*
     // Fetch labels for the pull request
     const labels = await get_pull_request_labels(pull.number);
     console.log(labels);
@@ -139,6 +146,8 @@ async function main() {
     if (labels.map((label: string) => label.toLowerCase()).includes(options.ignore.toLowerCase())) {
       continue;
     }
+    */
+    
 
     /*
     // If require_green is true, only merge the pull requests if they have the 'success' status

@@ -13268,14 +13268,16 @@ async function get_pull_requests() {
     });
     return response.data;
 }
-async function get_pull_request_labels(pull_number) {
-    let response = await octokit.issues.listLabelsOnIssue({
-        owner: owner,
-        repo: repo,
-        issue_number: pull_number
-    });
-    return response.data.map((label) => label.name);
+/*
+async function get_pull_request_labels(pull_number: number) {
+  let response = await octokit.issues.listLabelsOnIssue({
+    owner: owner,
+    repo: repo,
+    issue_number: pull_number
+  });
+  return response.data.map((label: any) => label.name);
 }
+*/
 async function create_combined_branch(options, base_sha) {
     try {
         await octokit.request('POST /repos/{owner}/{repo}/git/refs', {
@@ -13343,22 +13345,28 @@ async function main() {
     const pulls = await get_pull_requests();
     const base_sha = pulls[0].base.sha;
     await create_combined_branch(options, base_sha);
-    console.log(pulls);
     let combined_prs = [];
     for (const pull of pulls) {
         console.log(pull.head.ref);
         // Only merge pull requests that have a branch name starting with the prefix specified in the options.prefix
         if (!pull.head.ref.startsWith(options.prefix)) {
             continue;
-            console.log(pull.head.ref);
         }
+        let label = pull.head.label;
+        console.log(label);
+        if (label.toLowerCase().includes(options.ignore.toLowerCase())) {
+            console.log("ignored label");
+            continue;
+        }
+        /*
         // Fetch labels for the pull request
         const labels = await get_pull_request_labels(pull.number);
         console.log(labels);
         // Ignore the pull request if it has a label that matches options.ignore (case-insensitive)
-        if (labels.map((label) => label.toLowerCase()).includes(options.ignore.toLowerCase())) {
-            continue;
+        if (labels.map((label: string) => label.toLowerCase()).includes(options.ignore.toLowerCase())) {
+          continue;
         }
+        */
         /*
         // If require_green is true, only merge the pull requests if they have the 'success' status
         if (options.require_green === 'true') {
