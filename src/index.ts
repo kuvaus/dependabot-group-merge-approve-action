@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import { Octokit } from "@octokit/rest";
 import * as github from '@actions/github';
 
-const HTTP_STATUS_OK = 200;
+//const HTTP_STATUS_OK = 200;
 const HTTP_STATUS_CREATED = 201;
 const HTTP_STATUS_NOT_FOUND = 404;
 const HTTP_STATUS_UNPROCESSABLE_ENTITY = 422;
@@ -280,7 +280,8 @@ async function merge_individual_branch(options: Options, pull: any) {
             pull_number: pull.number,
         });
 
-        if ((merge_result.status === HTTP_STATUS_OK || merge_result.status === HTTP_STATUS_CREATED) && options.close_merged === 'true') {
+        if ((merge_result.status as 200 | 204) === 204 && options.close_merged === 'true') {
+        //if ((merge_result.status === HTTP_STATUS_OK || merge_result.status === HTTP_STATUS_CREATED) && options.close_merged === 'true') {
             await octokit.pulls.update({
                 owner: owner,
                 repo: repo,

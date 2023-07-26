@@ -13245,7 +13245,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const rest_1 = __nccwpck_require__(5375);
 const github = __importStar(__nccwpck_require__(5438));
-const HTTP_STATUS_OK = 200;
+//const HTTP_STATUS_OK = 200;
 const HTTP_STATUS_CREATED = 201;
 const HTTP_STATUS_NOT_FOUND = 404;
 const HTTP_STATUS_UNPROCESSABLE_ENTITY = 422;
@@ -13480,7 +13480,8 @@ async function merge_individual_branch(options, pull) {
             repo: repo,
             pull_number: pull.number,
         });
-        if ((merge_result.status === HTTP_STATUS_OK || merge_result.status === HTTP_STATUS_CREATED) && options.close_merged === 'true') {
+        if (merge_result.status === 204 && options.close_merged === 'true') {
+            //if ((merge_result.status === HTTP_STATUS_OK || merge_result.status === HTTP_STATUS_CREATED) && options.close_merged === 'true') {
             await octokit.pulls.update({
                 owner: owner,
                 repo: repo,
