@@ -1,10 +1,6 @@
 # dependabot-group-merge-approve-action
 
-Automatically group dependabot pull requests into one and approve merge.
-
-> **Warning**
-
->  DOES NOT WORK YET! DO NOT USE!
+Automatically group dependabot pull requests into a single one and merge it.
 
 ## Usage
 
