@@ -295,6 +295,45 @@ async function merge_individual_branch(options: Options, pull: any) {
     }
 }
 
+
+
+async function merge_dependabot_prs_individually() {
+    const { owner, repo } = github.context.repo;
+
+    const pulls = await octokit.pulls.list({
+        owner,
+        repo,
+        state: 'open'
+    });
+    
+    for (const pull of pulls.data) {
+        if (pull.user && pull.user.login === 'dependabot[bot]') {
+            try {
+                await octokit.pulls.createReview({
+                    owner,
+                    repo,
+                    pull_number: pull.number,
+                    event: 'APPROVE'
+                });
+    
+                await octokit.pulls.merge({
+                    owner,
+                    repo,
+                    pull_number: pull.number
+                });
+    
+                core.info(`Merged pull request #${pull.number}`);
+            } catch (error) {
+                if (error instanceof Error) {
+                    core.setFailed(error.message);
+                }
+            }
+        }
+    }
+}
+
+
+
 async function main() {
     
   const options = await parse_options();
@@ -314,6 +353,10 @@ async function main() {
   
   
   // If merge_dependabot_individually is true and the PR is from Dependabot, merge it individually
+  if (options.merge_dependabot_individually === 'true') {
+    await merge_dependabot_prs_individually();
+    return;
+  }
   
   if (options.merge_dependabot_individually === 'true') {
       for (const pull of dependabot_pulls) {
