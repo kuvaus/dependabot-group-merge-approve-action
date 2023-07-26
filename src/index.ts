@@ -13,13 +13,15 @@ const context = github.context;
 const owner = context.repo.owner;
 const repo = context.repo.repo;
 
-interface Options {
+type Options = {
     prefix:              string;
     require_green:       string;
     combined_pr_name:    string;
     ignore:              string;
     close_merged:        string;
     auto_merge_combined: string;
+    day:                 string | undefined;
+    hour:                number | undefined;
 }
 
 async function parse_options() {
@@ -30,18 +32,53 @@ async function parse_options() {
         ignore:              core.getInput('ignore')              || 'ignore',
         close_merged:        core.getInput('close_merged')        || 'false',
         auto_merge_combined: core.getInput('auto_merge_combined') || 'false',
+        day:                 core.getInput('day')                 || undefined,
+        hour:                parseInt(core.getInput('hour'))      || undefined,        
     };
     
     console.log(options);
     return options;
 }    
 
+
+async function is_specific_time(day: string | undefined, hour: number | undefined) {
+  const day_list = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const now = new Date();
+  const current_day = day_list[now.getDay()];
+  const current_hour = now.getHours();
+
+  if ((day && current_day !== day) || (hour !== undefined && current_hour < hour)) {
+    return false; // If it's not the correct day or hour, don't run the function
+  }
+  return true;
+}
+
+/*
 async function get_pull_requests() {
   let response = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
     owner: owner,
     repo: repo
   });
   return response.data;
+}
+*/
+
+async function get_dependabot_pull_requests() {
+  let pulls = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
+    owner: owner,
+    repo: repo,
+    state: 'open',
+  });
+  
+  const dependabot_pull_requests = pulls.data.filter(pr => pr.user?.login === 'dependabot[bot]');
+  
+  if (dependabot_pull_requests.length > 0) {
+    // Dependabot has finished its run
+    return dependabot_pull_requests;
+  }
+  
+  // If Dependabot has not finished its run, return an empty array
+  return [];
 }
 
 async function create_combined_branch(options: Options, base_sha: string) {
@@ -180,11 +217,15 @@ async function auto_merge_combined_pull_request(pr_number: number) {
   }
 }
 
-
-
 async function main() {
+    
   const options = await parse_options();
-  const pulls = await get_pull_requests();
+  
+  const time_boolean = await is_specific_time(options.day, options.hour);
+  if(!time_boolean) { return }
+  
+  //const pulls = await get_pull_requests();
+  const pulls = await get_dependabot_pull_requests();
   const base_sha = pulls[0].base.sha;
   await create_combined_branch(options, base_sha);
 

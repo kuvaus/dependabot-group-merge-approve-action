@@ -25,8 +25,12 @@ inputs:
   auto_merge_combined:
     description: 'Automatically merge the combined pull request'
     required: false
-
-
+  day:
+    description: 'Run on a specific day'
+    required: false
+  hour:
+    description: 'Run after a specific hour'
+    required: false
 
 # runs:
 #   using: node16
@@ -56,5 +60,7 @@ runs:
         INPUT_IGNORE:              ${{ inputs.ignore }}
         INPUT_CLOSE_MERGED:        ${{ inputs.close_merged }}
         INPUT_AUTO_MERGE_COMBINED: ${{ inputs.auto_merge_combined }}
+        INPUT_DAY:                 ${{ inputs.day }}
+        INPUT_HOUR:                ${{ inputs.hour }}
 
 
