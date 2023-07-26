@@ -4,6 +4,7 @@ import * as github from '@actions/github';
 
 const HTTP_STATUS_UNPROCESSABLE_ENTITY = 422;
 const HTTP_STATUS_CREATED = 201;
+const HTTP_STATUS_NOT_FOUND = 404;
 
 
 const token = process.env.GITHUB_TOKEN;
@@ -68,22 +69,33 @@ async function get_pull_requests() {
 */
 
 async function get_dependabot_pull_requests() {
-  let pulls = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
-    owner: owner,
-    repo: repo,
-    state: 'open',
-  });
-  
-  const dependabot_pull_requests = pulls.data.filter(pr => pr.user?.login === 'dependabot[bot]');
-  
-  if (dependabot_pull_requests.length > 0) {
-    // Dependabot has finished its run
-    return dependabot_pull_requests;
-  }
-  
-  // If Dependabot has not finished its run, return an empty array
-  return [];
+    try {
+        let pulls = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
+            owner: owner,
+            repo: repo,
+            state: 'open',
+        });
+
+        const dependabot_pull_requests = pulls.data.filter(pr => pr.user?.login === 'dependabot[bot]');
+
+        if (dependabot_pull_requests.length > 0) {
+            // Dependabot has finished its run
+            return dependabot_pull_requests;
+        }
+
+        // If Dependabot has not finished its run, return an empty array
+        return [];
+    } catch (error: any) {
+        if (error.status === HTTP_STATUS_NOT_FOUND) {
+            // If the error is a 404 (Not Found), return an empty array
+            return [];
+        } else {
+            // If the error is something else, re-throw it
+            throw error;
+        }
+    }
 }
+
 
 async function create_combined_branch(options: Options, base_sha: string) {
   try {
@@ -229,8 +241,8 @@ async function main() {
   const time_boolean = await is_specific_time(options.day, options.hour);
   if(!time_boolean) { return }
   
-  //wait 5 seconds so that pull requests will be green
-  await delay(5000);
+  //wait 1 second so that pull requests will be green
+  await delay(1000);
   
   //const pulls = await get_pull_requests();
   const pulls = await get_dependabot_pull_requests();

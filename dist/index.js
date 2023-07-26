@@ -13247,6 +13247,7 @@ const rest_1 = __nccwpck_require__(5375);
 const github = __importStar(__nccwpck_require__(5438));
 const HTTP_STATUS_UNPROCESSABLE_ENTITY = 422;
 const HTTP_STATUS_CREATED = 201;
+const HTTP_STATUS_NOT_FOUND = 404;
 const token = process.env.GITHUB_TOKEN;
 const octokit = new rest_1.Octokit({ auth: token });
 const context = github.context;
@@ -13289,18 +13290,30 @@ async function get_pull_requests() {
 }
 */
 async function get_dependabot_pull_requests() {
-    let pulls = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
-        owner: owner,
-        repo: repo,
-        state: 'open',
-    });
-    const dependabot_pull_requests = pulls.data.filter(pr => { var _a; return ((_a = pr.user) === null || _a === void 0 ? void 0 : _a.login) === 'dependabot[bot]'; });
-    if (dependabot_pull_requests.length > 0) {
-        // Dependabot has finished its run
-        return dependabot_pull_requests;
+    try {
+        let pulls = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
+            owner: owner,
+            repo: repo,
+            state: 'open',
+        });
+        const dependabot_pull_requests = pulls.data.filter(pr => { var _a; return ((_a = pr.user) === null || _a === void 0 ? void 0 : _a.login) === 'dependabot[bot]'; });
+        if (dependabot_pull_requests.length > 0) {
+            // Dependabot has finished its run
+            return dependabot_pull_requests;
+        }
+        // If Dependabot has not finished its run, return an empty array
+        return [];
     }
-    // If Dependabot has not finished its run, return an empty array
-    return [];
+    catch (error) {
+        if (error.status === HTTP_STATUS_NOT_FOUND) {
+            // If the error is a 404 (Not Found), return an empty array
+            return [];
+        }
+        else {
+            // If the error is something else, re-throw it
+            throw error;
+        }
+    }
 }
 async function create_combined_branch(options, base_sha) {
     try {
@@ -13434,8 +13447,8 @@ async function main() {
     if (!time_boolean) {
         return;
     }
-    //wait 5 seconds so that pull requests will be green
-    await delay(5000);
+    //wait 1 second so that pull requests will be green
+    await delay(1000);
     //const pulls = await get_pull_requests();
     const pulls = await get_dependabot_pull_requests();
     const base_sha = pulls[0].base.sha;
