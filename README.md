@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Group Depenadabot PRs
+      - name: Combine dependabot pull requests
         uses: kuvaus/dependabot-group-merge-approve-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_KEY }}
@@ -44,11 +44,13 @@ jobs:
         uses: kuvaus/dependabot-group-merge-approve-action@v1
         with:
           prefix: "dependabot" # Prefix to find the pull requests.
-          require_green: "frue" # Require the pull requests to be green
+          require_green: "true" # Require the pull requests to be green
           combined_pr_name: "combined" # Branch name for the combined pull request
           ignore: "ignore" # Ignore pull requests with this name
           close_merged: "false" # Close merged pull requests automatically
           auto_merge_combined: "false" # Automatically merge the combined pull request
+          day: "Monday" # Run on a specific day, any Monday
+          hour: "16" # Run after a specific hour, 4 PM
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_KEY }}
 ```
