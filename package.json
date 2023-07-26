@@ -1,7 +1,7 @@
 {
   "name": "dependabot-group-merge-approve-action",
   "version": "1.0.0",
-  "description": "Automatically group dependabot pull requests into one and approve merge",
+  "description": "Automatically group dependabot pull requests into a single one and merge it",
   "main": "dist/index.ts",
   "scripts": {
     "build": "ncc build src/index.ts -o dist",
