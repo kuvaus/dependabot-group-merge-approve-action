@@ -254,15 +254,15 @@ async function main() {
   //wait 1 second so that pull requests will be green
   await delay(1000);
   
-  let pulls = await get_pull_requests();
+  const pulls = await get_pull_requests();
   const dependabot_pulls = await get_dependabot_pull_requests();
   if(pulls.length === 0) { return }
   const base_sha = pulls[0].base.sha;
   await create_combined_branch(options, base_sha);
 
   let combined_prs = [];
-  pulls = dependabot_pulls;
-  for (const pull of pulls) {
+  //might need to change this
+  for (const pull of dependabot_pulls) {
     // Only merge pull requests that have a branch name starting with the prefix specified in the options.prefix
     if (!pull.head.ref.startsWith(options.prefix)) {
       continue;
