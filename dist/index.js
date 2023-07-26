@@ -13402,19 +13402,54 @@ async function create_combined_pull_request(options, combined_prs, base_branch) 
         await auto_merge_combined_pull_request(pr_number);
     }
 }
+/*
+async function auto_merge_combined_pull_request(pr_number: number) {
+  try {
+    const merge_result = await octokit.pulls.merge({
+      owner: owner,
+      repo: repo,
+      pull_number: pr_number
+    });
+
+    if ((merge_result.status as 200 | 204) === 204) {
+        console.log(`Pull request #${pr_number} merged successfully`);
+        return true;
+    } else {
+        console.log(`Failed to merge pull request #${pr_number}`);
+        return false;
+    }
+  } catch (error) {
+    console.log(`Error merging pull request #${pr_number}: ${error}`);
+    return false;
+  }
+}
+*/
 async function auto_merge_combined_pull_request(pr_number) {
     try {
-        const merge_result = await octokit.pulls.merge({
+        // Get the pull request
+        const pr = await octokit.pulls.get({
             owner: owner,
             repo: repo,
             pull_number: pr_number
         });
-        if (merge_result.status === 204) {
-            console.log(`Pull request #${pr_number} merged successfully`);
-            return true;
+        // Check if the pull request is mergeable
+        if (pr.data.mergeable) {
+            const merge_result = await octokit.pulls.merge({
+                owner: owner,
+                repo: repo,
+                pull_number: pr_number
+            });
+            if (merge_result.status === 204) {
+                console.log(`Pull request #${pr_number} merged successfully`);
+                return true;
+            }
+            else {
+                console.log(`Failed to merge pull request #${pr_number}`);
+                return false;
+            }
         }
         else {
-            console.log(`Failed to merge pull request #${pr_number}`);
+            console.log(`Pull request #${pr_number} is not mergeable`);
             return false;
         }
     }
