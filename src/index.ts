@@ -156,6 +156,18 @@ async function merge_into_combined_branch(options: Options, pull: any) {
 }
 
 
+async function check_if_combined_exists(options: Options) {
+    
+  // Check if a pull request already exists
+  const existingPRs = await octokit.pulls.list({
+    owner: owner,
+    repo: repo,
+    state: 'open',
+    head: owner + ':' + options.combined_pr_name
+  });
+  return existingPRs;
+ }
+
 async function create_combined_pull_request(options: Options, combined_prs: string[], base_branch: string) {
   // Check if there are any PRs to combine
   if (combined_prs.length === 0) {
@@ -166,12 +178,16 @@ async function create_combined_pull_request(options: Options, combined_prs: stri
   const combined_prs_string = combined_prs.join('\n');
 
   // Check if a pull request already exists
+  const existingPRs = await check_if_combined_exists(options);
+  
+  /*
   const existingPRs = await octokit.pulls.list({
     owner: owner,
     repo: repo,
     state: 'open',
     head: owner + ':' + options.combined_pr_name
   });
+  */
 
   let pr_number;
   if (existingPRs.data.length > 0) {
@@ -284,6 +300,14 @@ async function main() {
 
   const base_branch = pulls[0].base.ref;
   await create_combined_pull_request(options, combined_prs, base_branch);
+  
+  const existingPRs = await check_if_combined_exists(options);
+  if (existingPRs.data.length !== 0) { 
+    
+    if (options.auto_merge_combined === 'true') {
+      await auto_merge_combined_pull_request(existingPRs.data[0].number);
+    }
+  }
 }
 
 
