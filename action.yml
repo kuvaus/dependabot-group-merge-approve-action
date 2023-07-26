@@ -31,6 +31,9 @@ inputs:
   hour:
     description: 'Run after a specific hour'
     required: false
+  merge_dependabot_individually:
+    description: 'Merge dependabot pull requests individually instead of combining'
+    required: false
 
 # runs:
 #   using: node16
@@ -54,13 +57,14 @@ runs:
         echo "::set-output name=releasenotes::value1"
       shell: ${{ (runner.os == 'Windows' && 'pwsh') || 'bash' }}
       env:
-        INPUT_PREFIX:              ${{ inputs.prefix }}
-        INPUT_REQUIRE_GREEN:       ${{ inputs.require_green }}
-        INPUT_COMBINED_PR_NAME:    ${{ inputs.combined_pr_name }}
-        INPUT_IGNORE:              ${{ inputs.ignore }}
-        INPUT_CLOSE_MERGED:        ${{ inputs.close_merged }}
-        INPUT_AUTO_MERGE_COMBINED: ${{ inputs.auto_merge_combined }}
-        INPUT_DAY:                 ${{ inputs.day }}
-        INPUT_HOUR:                ${{ inputs.hour }}
+        INPUT_PREFIX:                        ${{ inputs.prefix }}
+        INPUT_REQUIRE_GREEN:                 ${{ inputs.require_green }}
+        INPUT_COMBINED_PR_NAME:              ${{ inputs.combined_pr_name }}
+        INPUT_IGNORE:                        ${{ inputs.ignore }}
+        INPUT_CLOSE_MERGED:                  ${{ inputs.close_merged }}
+        INPUT_AUTO_MERGE_COMBINED:           ${{ inputs.auto_merge_combined }}
+        INPUT_DAY:                           ${{ inputs.day }}
+        INPUT_HOUR:                          ${{ inputs.hour }}
+        INPUT_MERGE_DEPENDABOT_INDIVIDUALLY: ${{ inputs.merge_dependabot_individually }}
 
 

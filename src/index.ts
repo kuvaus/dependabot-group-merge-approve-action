@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import { Octokit } from "@octokit/rest";
 import * as github from '@actions/github';
 
+const HTTP_STATUS_OK = 200;
 const HTTP_STATUS_CREATED = 201;
 const HTTP_STATUS_NOT_FOUND = 404;
 const HTTP_STATUS_UNPROCESSABLE_ENTITY = 422;
@@ -15,26 +16,28 @@ const owner = context.repo.owner;
 const repo = context.repo.repo;
 
 type Options = {
-    prefix:              string;
-    require_green:       string;
-    combined_pr_name:    string;
-    ignore:              string;
-    close_merged:        string;
-    auto_merge_combined: string;
-    day:                 string | undefined;
-    hour:                number | undefined;
+    prefix:                        string;
+    require_green:                 string;
+    combined_pr_name:              string;
+    ignore:                        string;
+    close_merged:                  string;
+    auto_merge_combined:           string;
+    day:                           string | undefined;
+    hour:                          number | undefined;
+    merge_dependabot_individually: string;
 }
 
 async function parse_options() {
     const options: Options = {
-        prefix:              core.getInput('prefix')              || 'dependabot',
-        require_green:       core.getInput('require_green')       || 'true',
-        combined_pr_name:    core.getInput('combined_pr_name')    || 'combined',
-        ignore:              core.getInput('ignore')              || 'ignore',
-        close_merged:        core.getInput('close_merged')        || 'false',
-        auto_merge_combined: core.getInput('auto_merge_combined') || 'false',
-        day:                 core.getInput('day')                 || undefined,
-        hour:                parseInt(core.getInput('hour'))      || undefined,        
+        prefix:                        core.getInput('prefix')                        || 'dependabot',
+        require_green:                 core.getInput('require_green')                 || 'true',
+        combined_pr_name:              core.getInput('combined_pr_name')              || 'combined',
+        ignore:                        core.getInput('ignore')                        || 'ignore',
+        close_merged:                  core.getInput('close_merged')                  || 'false',
+        auto_merge_combined:           core.getInput('auto_merge_combined')           || 'false',
+        day:                           core.getInput('day')                           || undefined,
+        hour:                          parseInt(core.getInput('hour'))                || undefined,        
+        merge_dependabot_individually: core.getInput('merge_dependabot_individually') || 'false',
     };
     
     console.log(options);
@@ -131,6 +134,12 @@ async function merge_into_combined_branch(options: Options, pull: any) {
     console.log(`Skipping merge of ${branch} into itself`);
     return false;
   }
+
+  // If merge_dependabot_individually is true and the PR is from Dependabot, merge it individually
+  if (options.merge_dependabot_individually === 'true' && pull.user?.login === 'dependabot[bot]') {
+      return await merge_individual_branch(options, pull);
+  }
+
   
   try {
     const merge_result = await octokit.request('POST /repos/{owner}/{repo}/merges', {
@@ -268,7 +277,27 @@ async function auto_merge_combined_pull_request(pr_number: number) {
   }
 }
 
+async function merge_individual_branch(options: Options, pull: any) {
+    try {
+        const merge_result = await octokit.pulls.merge({
+            owner: owner,
+            repo: repo,
+            pull_number: pull.number,
+        });
 
+        if ((merge_result.status === HTTP_STATUS_OK || merge_result.status === HTTP_STATUS_CREATED) && options.close_merged === 'true') {
+            await octokit.pulls.update({
+                owner: owner,
+                repo: repo,
+                pull_number: pull.number,
+                state: 'closed',
+            });
+        }
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
 
 async function main() {
     

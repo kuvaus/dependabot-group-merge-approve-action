@@ -13245,6 +13245,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const rest_1 = __nccwpck_require__(5375);
 const github = __importStar(__nccwpck_require__(5438));
+const HTTP_STATUS_OK = 200;
 const HTTP_STATUS_CREATED = 201;
 const HTTP_STATUS_NOT_FOUND = 404;
 const HTTP_STATUS_UNPROCESSABLE_ENTITY = 422;
@@ -13263,6 +13264,7 @@ async function parse_options() {
         auto_merge_combined: core.getInput('auto_merge_combined') || 'false',
         day: core.getInput('day') || undefined,
         hour: parseInt(core.getInput('hour')) || undefined,
+        merge_dependabot_individually: core.getInput('merge_dependabot_individually') || 'false',
     };
     console.log(options);
     return options;
@@ -13342,11 +13344,16 @@ async function create_combined_branch(options, base_sha) {
     }
 }
 async function merge_into_combined_branch(options, pull) {
+    var _a;
     const branch = pull.head.ref;
     // Check if the branch is the same as the combined branch
     if (branch === options.combined_pr_name) {
         console.log(`Skipping merge of ${branch} into itself`);
         return false;
+    }
+    // If merge_dependabot_individually is true and the PR is from Dependabot, merge it individually
+    if (options.merge_dependabot_individually === 'true' && ((_a = pull.user) === null || _a === void 0 ? void 0 : _a.login) === 'dependabot[bot]') {
+        return await merge_individual_branch(options, pull);
     }
     try {
         const merge_result = await octokit.request('POST /repos/{owner}/{repo}/merges', {
@@ -13468,6 +13475,27 @@ async function auto_merge_combined_pull_request(pr_number) {
     }
     catch (error) {
         console.log(`Error merging pull request #${pr_number}: ${error}`);
+        return false;
+    }
+}
+async function merge_individual_branch(options, pull) {
+    try {
+        const merge_result = await octokit.pulls.merge({
+            owner: owner,
+            repo: repo,
+            pull_number: pull.number,
+        });
+        if ((merge_result.status === HTTP_STATUS_OK || merge_result.status === HTTP_STATUS_CREATED) && options.close_merged === 'true') {
+            await octokit.pulls.update({
+                owner: owner,
+                repo: repo,
+                pull_number: pull.number,
+                state: 'closed',
+            });
+        }
+        return true;
+    }
+    catch (error) {
         return false;
     }
 }
