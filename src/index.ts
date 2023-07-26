@@ -254,9 +254,9 @@ async function main() {
   //wait 1 second so that pull requests will be green
   await delay(1000);
   
-  const pulls = await get_pull_requests();
+  let pulls = await get_pull_requests();
   const dependabot_pulls = await get_dependabot_pull_requests();
-  if(pulls === []) { return }
+  if(pulls.length === 0) { return }
   const base_sha = pulls[0].base.sha;
   await create_combined_branch(options, base_sha);
 

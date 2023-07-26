@@ -13280,15 +13280,25 @@ async function is_specific_time(day, hour) {
 async function delay(time) {
     return new Promise(resolve => setTimeout(resolve, time));
 }
-/*
 async function get_pull_requests() {
-  let response = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
-    owner: owner,
-    repo: repo
-  });
-  return response.data;
+    try {
+        let response = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
+            owner: owner,
+            repo: repo
+        });
+        return response.data;
+    }
+    catch (error) {
+        if (error.status === HTTP_STATUS_NOT_FOUND) {
+            // If the error is a 404 (Not Found), return an empty array
+            return [];
+        }
+        else {
+            // If the error is something else, re-throw it
+            throw error;
+        }
+    }
 }
-*/
 async function get_dependabot_pull_requests() {
     try {
         let pulls = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
@@ -13449,11 +13459,15 @@ async function main() {
     }
     //wait 1 second so that pull requests will be green
     await delay(1000);
-    //const pulls = await get_pull_requests();
-    const pulls = await get_dependabot_pull_requests();
+    let pulls = await get_pull_requests();
+    const dependabot_pulls = await get_dependabot_pull_requests();
+    if (pulls.length === 0) {
+        return;
+    }
     const base_sha = pulls[0].base.sha;
     await create_combined_branch(options, base_sha);
     let combined_prs = [];
+    pulls = dependabot_pulls;
     for (const pull of pulls) {
         // Only merge pull requests that have a branch name starting with the prefix specified in the options.prefix
         if (!pull.head.ref.startsWith(options.prefix)) {
