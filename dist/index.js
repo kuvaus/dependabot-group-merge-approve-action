@@ -13344,16 +13344,11 @@ async function create_combined_branch(options, base_sha) {
     }
 }
 async function merge_into_combined_branch(options, pull) {
-    var _a;
     const branch = pull.head.ref;
     // Check if the branch is the same as the combined branch
     if (branch === options.combined_pr_name) {
         console.log(`Skipping merge of ${branch} into itself`);
         return false;
-    }
-    // If merge_dependabot_individually is true and the PR is from Dependabot, merge it individually
-    if (options.merge_dependabot_individually === 'true' && ((_a = pull.user) === null || _a === void 0 ? void 0 : _a.login) === 'dependabot[bot]') {
-        return await merge_individual_branch(options, pull);
     }
     try {
         const merge_result = await octokit.request('POST /repos/{owner}/{repo}/merges', {
@@ -13500,6 +13495,7 @@ async function merge_individual_branch(options, pull) {
     }
 }
 async function main() {
+    var _a;
     const options = await parse_options();
     // run only on specific time/date if specified
     const time_boolean = await is_specific_time(options.day, options.hour);
@@ -13514,6 +13510,26 @@ async function main() {
         return;
     }
     const base_sha = pulls[0].base.sha;
+    // If merge_dependabot_individually is true and the PR is from Dependabot, merge it individually
+    if (options.merge_dependabot_individually === 'true') {
+        for (const pull of dependabot_pulls) {
+            // Only merge pull requests that have a branch name starting with the prefix specified in the options.prefix
+            if (!pull.head.ref.startsWith(options.prefix)) {
+                continue;
+            }
+            //Ignore ignored-label PRs
+            let label = pull.head.label;
+            if (label.toLowerCase().includes(options.ignore.toLowerCase())) {
+                console.log("Ignored label");
+                continue;
+            }
+            if (options.merge_dependabot_individually === 'true' && ((_a = pull.user) === null || _a === void 0 ? void 0 : _a.login) === 'dependabot[bot]') {
+                const merge_individual_success = await merge_individual_branch(options, pull);
+                console.log(merge_individual_success);
+            }
+        }
+        return;
+    }
     await create_combined_branch(options, base_sha);
     let combined_prs = [];
     //might need to change this
