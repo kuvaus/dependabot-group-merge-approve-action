@@ -13276,6 +13276,9 @@ async function is_specific_time(day, hour) {
     }
     return true;
 }
+async function delay(time) {
+    return new Promise(resolve => setTimeout(resolve, time));
+}
 /*
 async function get_pull_requests() {
   let response = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
@@ -13426,10 +13429,13 @@ async function auto_merge_combined_pull_request(pr_number) {
 }
 async function main() {
     const options = await parse_options();
+    // run only on specific time/date if specified
     const time_boolean = await is_specific_time(options.day, options.hour);
     if (!time_boolean) {
         return;
     }
+    //wait 5 seconds so that pull requests will be green
+    await delay(5000);
     //const pulls = await get_pull_requests();
     const pulls = await get_dependabot_pull_requests();
     const base_sha = pulls[0].base.sha;

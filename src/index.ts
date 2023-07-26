@@ -53,6 +53,10 @@ async function is_specific_time(day: string | undefined, hour: number | undefine
   return true;
 }
 
+async function delay(time: number) {
+  return new Promise(resolve => setTimeout(resolve, time));
+}
+
 /*
 async function get_pull_requests() {
   let response = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
@@ -221,8 +225,12 @@ async function main() {
     
   const options = await parse_options();
   
+  // run only on specific time/date if specified
   const time_boolean = await is_specific_time(options.day, options.hour);
   if(!time_boolean) { return }
+  
+  //wait 5 seconds so that pull requests will be green
+  await delay(5000);
   
   //const pulls = await get_pull_requests();
   const pulls = await get_dependabot_pull_requests();
