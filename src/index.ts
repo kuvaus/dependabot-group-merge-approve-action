@@ -2,9 +2,9 @@ import * as core from '@actions/core';
 import { Octokit } from "@octokit/rest";
 import * as github from '@actions/github';
 
-const HTTP_STATUS_UNPROCESSABLE_ENTITY = 422;
 const HTTP_STATUS_CREATED = 201;
 const HTTP_STATUS_NOT_FOUND = 404;
+const HTTP_STATUS_UNPROCESSABLE_ENTITY = 422;
 
 
 const token = process.env.GITHUB_TOKEN;
@@ -160,50 +160,17 @@ async function merge_into_combined_branch(options: Options, pull: any) {
   }
 }
 
-/*
-async function merge_into_combined_branch(options: Options, pull: any) {
-  const branch = pull.head.ref;
-  
-  // Check if the branch is the same as the combined branch
-  if (branch === options.combined_pr_name) {
-    console.log(`Skipping merge of ${branch} into itself`);
-    return false;
-  }
-  
-  try {
-    const merge_result = await octokit.request('POST /repos/{owner}/{repo}/merges', {
-      owner: owner,
-      repo: repo,
-      base: options.combined_pr_name,
-      head: branch,
-    });
-
-    // Only close the original pull request if it was successfully merged and options.close_merged is true
-    if (merge_result.status === HTTP_STATUS_CREATED && options.close_merged === 'true') {
-        await octokit.pulls.update({
-          owner: owner,
-          repo: repo,
-          pull_number: pull.number,
-          state: 'closed'
-        });
-    }
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
-*/
 
 async function check_if_combined_exists(options: Options) {
     
   // Check if a pull request already exists
-  const existingPRs = await octokit.pulls.list({
+  const existing_prs = await octokit.pulls.list({
     owner: owner,
     repo: repo,
     state: 'open',
     head: owner + ':' + options.combined_pr_name
   });
-  return existingPRs;
+  return existing_prs;
  }
 
 async function create_combined_pull_request(options: Options, combined_prs: string[], base_branch: string) {
@@ -216,25 +183,25 @@ async function create_combined_pull_request(options: Options, combined_prs: stri
   const combined_prs_string = combined_prs.join('\n');
 
   // Check if a pull request already exists
-  const existingPRs = await check_if_combined_exists(options);
+  const existing_prs = await check_if_combined_exists(options);
 
   let pr_number;
-  if (existingPRs.data.length > 0) {
+  if (existing_prs.data.length > 0) {
     console.log(`Updating existing pull request`);
-    const existingPR = existingPRs.data[0];
+    const existing_pr = existing_prs.data[0];
 
     // Get the existing body and append the new pull requests
-    let body = existingPR.body + '\n' + combined_prs_string;
+    let body = existing_pr.body + '\n' + combined_prs_string;
 
     await octokit.pulls.update({
       owner: owner,
       repo: repo,
-      pull_number: existingPR.number,
+      pull_number: existing_pr.number,
       title: 'Combined pull request',
       body: body,
       state: 'open'
     });
-    pr_number = existingPR.number;
+    pr_number = existing_pr.number;
   } else {
     let body = 'This pull request contains the following pull requests:\n' + combined_prs_string;
     const pull_request = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
@@ -252,42 +219,6 @@ async function create_combined_pull_request(options: Options, combined_prs: stri
     await auto_merge_combined_pull_request(pr_number);
   }
 }
-
-/*
-async function auto_merge_combined_pull_request(pr_number: number) {
-  try {
-    // Get the pull request
-    const pr = await octokit.pulls.get({
-      owner: owner,
-      repo: repo,
-      pull_number: pr_number
-    });
-
-    // Check if the pull request is mergeable
-    if (pr.data.mergeable) {
-      const merge_result = await octokit.pulls.merge({
-        owner: owner,
-        repo: repo,
-        pull_number: pr_number
-      });
-
-      if ((merge_result.status as 200 | 204) === 204) {
-          console.log(`Pull request #${pr_number} merged successfully`);
-          return true;
-      } else {
-          console.log(`Failed to merge pull request #${pr_number}`);
-          return false;
-      }
-    } else {
-      console.log(`Pull request #${pr_number} is not mergeable`);
-      return false;
-    }
-  } catch (error) {
-    console.log(`Error merging pull request #${pr_number}: ${error}`);
-    return false;
-  }
-}
-*/
 
 async function auto_merge_combined_pull_request(pr_number: number) {
   try {
@@ -366,7 +297,7 @@ async function main() {
 
     let label = pull.head.label;
     if (label.toLowerCase().includes(options.ignore.toLowerCase())) {
-      console.log("ignored label");
+      console.log("Ignored label");
       continue;
     }
 
@@ -381,11 +312,11 @@ async function main() {
   const base_branch = pulls[0].base.ref;
   await create_combined_pull_request(options, combined_prs, base_branch);
   
-  const existingPRs = await check_if_combined_exists(options);
-  if (existingPRs.data.length !== 0) { 
+  const existing_prs = await check_if_combined_exists(options);
+  if (existing_prs.data.length !== 0) { 
     
     if (options.auto_merge_combined === 'true') {
-      await auto_merge_combined_pull_request(existingPRs.data[0].number);
+      await auto_merge_combined_pull_request(existing_prs.data[0].number);
     }
   }
 }
