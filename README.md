@@ -47,7 +47,7 @@ jobs:
           auto_merge_combined: "false" # Automatically merge the combined pull request
           day: "Monday" # Run on a specific day, any Monday
           hour: "16" # Run after a specific hour, 4 PM
-          merge_dependabot_individually: # Merge individually instead of combining
+          merge_dependabot_individually: "false" # Merge individually instead of combining
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_KEY }}
 ```
