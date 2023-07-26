@@ -1,6 +1,6 @@
 
 name: 'Dependabot Group Merge Approve Action'
-description: 'Automatically group dependabot pull requests into one and approve merge'
+description: 'Automatically group dependabot pull requests into a single one and merge it'
 author: 'kuvaus'
 branding:
   color: "green"
