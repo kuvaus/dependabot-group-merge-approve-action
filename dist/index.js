@@ -13357,6 +13357,10 @@ async function merge_into_combined_branch(options, pull) {
         });
         // Only close the original pull request if it was successfully merged and options.close_merged is true
         // and options.auto_merge_combined is false
+        if (merge_result.status === HTTP_STATUS_CREATED && options.close_merged === 'true' && options.auto_merge_combined === 'true') {
+            // PRs can be merged but we will handle this after combined PR is merged
+            return true;
+        }
         if (merge_result.status === HTTP_STATUS_CREATED && options.close_merged === 'true' && options.auto_merge_combined === 'false') {
             await octokit.pulls.update({
                 owner: owner,
