@@ -141,7 +141,8 @@ async function merge_into_combined_branch(options: Options, pull: any) {
     });
 
     // Only close the original pull request if it was successfully merged and options.close_merged is true
-    if (merge_result.status === HTTP_STATUS_CREATED && options.close_merged === 'true') {
+    // and options.auto_merge_combined is false
+    if (merge_result.status === HTTP_STATUS_CREATED && options.close_merged === 'true' && options.auto_merge_combined === 'false') {
         await octokit.pulls.update({
           owner: owner,
           repo: repo,
@@ -155,6 +156,39 @@ async function merge_into_combined_branch(options: Options, pull: any) {
   }
 }
 
+/*
+async function merge_into_combined_branch(options: Options, pull: any) {
+  const branch = pull.head.ref;
+  
+  // Check if the branch is the same as the combined branch
+  if (branch === options.combined_pr_name) {
+    console.log(`Skipping merge of ${branch} into itself`);
+    return false;
+  }
+  
+  try {
+    const merge_result = await octokit.request('POST /repos/{owner}/{repo}/merges', {
+      owner: owner,
+      repo: repo,
+      base: options.combined_pr_name,
+      head: branch,
+    });
+
+    // Only close the original pull request if it was successfully merged and options.close_merged is true
+    if (merge_result.status === HTTP_STATUS_CREATED && options.close_merged === 'true') {
+        await octokit.pulls.update({
+          owner: owner,
+          repo: repo,
+          pull_number: pull.number,
+          state: 'closed'
+        });
+    }
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+*/
 
 async function check_if_combined_exists(options: Options) {
     
@@ -179,15 +213,6 @@ async function create_combined_pull_request(options: Options, combined_prs: stri
 
   // Check if a pull request already exists
   const existingPRs = await check_if_combined_exists(options);
-  
-  /*
-  const existingPRs = await octokit.pulls.list({
-    owner: owner,
-    repo: repo,
-    state: 'open',
-    head: owner + ':' + options.combined_pr_name
-  });
-  */
 
   let pr_number;
   if (existingPRs.data.length > 0) {
@@ -224,7 +249,7 @@ async function create_combined_pull_request(options: Options, combined_prs: stri
   }
 }
 
-
+/*
 async function auto_merge_combined_pull_request(pr_number: number) {
   try {
     // Get the pull request
@@ -258,6 +283,57 @@ async function auto_merge_combined_pull_request(pr_number: number) {
     return false;
   }
 }
+*/
+
+async function auto_merge_combined_pull_request(pr_number: number) {
+  try {
+    // Get the pull request
+    const pr = await octokit.pulls.get({
+      owner: owner,
+      repo: repo,
+      pull_number: pr_number
+    });
+
+    // Check if the pull request is mergeable
+    if (pr.data.mergeable) {
+      const merge_result = await octokit.pulls.merge({
+        owner: owner,
+        repo: repo,
+        pull_number: pr_number
+      });
+
+      if ((merge_result.status as 200 | 204) === 204) {
+          console.log(`Pull request #${pr_number} merged successfully`);
+
+          // Get the individual Dependabot pull requests that were included in the combined pull request
+          const dependabotPullRequests = await get_dependabot_pull_requests();
+
+          // Close each individual pull request
+          for (const pull of dependabotPullRequests) {
+            await octokit.pulls.update({
+              owner: owner,
+              repo: repo,
+              pull_number: pull.number,
+              state: 'closed'
+            });
+          }
+
+          return true;
+      } else {
+          console.log(`Failed to merge pull request #${pr_number}`);
+          return false;
+      }
+    } else {
+      console.log(`Pull request #${pr_number} is not mergeable`);
+      return false;
+    }
+  } catch (error) {
+    console.log(`Error merging pull request #${pr_number}: ${error}`);
+    return false;
+  }
+}
+
+
 
 async function main() {
     
