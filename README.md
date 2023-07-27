@@ -48,14 +48,14 @@ jobs:
           auto_merge_combined: "false" # Automatically merge the combined pull request
           day: "Monday" # Run on a specific day, any Monday
           hour: "16" # Run after a specific hour, 4 PM
-          wait: "1" # Wait n seconds before starting 
+          wait: "1" # Wait N seconds before starting
           merge_dependabot_individually: "false" # Merge individually instead of combining
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_KEY }}
 ```
 #### Combine dependabot pull requests and merge the combined pull request automatically
 
-By default the action will leave the pull requests open so you can verify before you merge. But sometimes dependabot just updates your `package.json` so it is useful to merge the pull requests automatically. Here is a basic workflow that automatically combines the dependabot pull requests into a single pull request and then automatically merges it. It also closes the open pull requests for you after merge to avoid clutter. Note that the action runs on `workflow_dispatch` meaning you have to trigger it.
+By default the action will leave the pull requests open so you can verify before you merge. But sometimes dependabot just updates your `package.json` so it is useful to merge the pull requests automatically. Here is a basic workflow that automatically combines the dependabot pull requests into a single pull request and then automatically merges it. It also closes the open pull requests for you after merge to avoid clutter. Note that the action runs on `workflow_dispatch` meaning you have to trigger it. Another option is to run it on  `pull_request_target` but set the `wait` option to e.g. `120` (2 minutes) so that it waits dependabot pull requests to come before it starts combining them.
 
 ```yaml
 name: Combine dependabot pull requests
