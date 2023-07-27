@@ -235,13 +235,15 @@ async function auto_merge_combined_pull_request(pr_number: number) {
 
     // Check if the pull request is mergeable
     if (pr.data.mergeable) {
-        
+      
+      /*  
       await octokit.pulls.createReview({
         owner,
         repo,
         pull_number: pr_number,
         event: 'APPROVE'
       });
+      */
         
       const merge_result = await octokit.pulls.merge({
         owner: owner,
