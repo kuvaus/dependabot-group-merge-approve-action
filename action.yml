@@ -7,8 +7,8 @@ branding:
   icon: "git-pull-request"
 
 inputs:
-  prefix:
-    description: 'Prefix to find the pull requests.'
+  botname:
+    description: 'Name of the bot. E.g. dependabot or renovate'
     required: false
   require_green:
     description: 'Require the pull requests to be green'
@@ -34,8 +34,8 @@ inputs:
   wait:
     description: 'Wait N seconds before starting'
     required: false
-  merge_dependabot_individually:
-    description: 'Merge dependabot pull requests individually instead of combining'
+  merge_individually:
+    description: 'Merge pull requests individually instead of combining'
     required: false
 
 # runs:
@@ -60,7 +60,7 @@ runs:
         echo "::set-output name=releasenotes::value1"
       shell: ${{ (runner.os == 'Windows' && 'pwsh') || 'bash' }}
       env:
-        INPUT_PREFIX:                        ${{ inputs.prefix }}
+        INPUT_BOTNAME:                       ${{ inputs.botname }}
         INPUT_REQUIRE_GREEN:                 ${{ inputs.require_green }}
         INPUT_COMBINED_PR_NAME:              ${{ inputs.combined_pr_name }}
         INPUT_IGNORE:                        ${{ inputs.ignore }}
@@ -69,6 +69,6 @@ runs:
         INPUT_DAY:                           ${{ inputs.day }}
         INPUT_HOUR:                          ${{ inputs.hour }}
         INPUT_WAIT:                          ${{ inputs.wait }}
-        INPUT_MERGE_DEPENDABOT_INDIVIDUALLY: ${{ inputs.merge_dependabot_individually }}
+        INPUT_MERGE_INDIVIDUALLY:            ${{ inputs.merge_individually }}
 
 

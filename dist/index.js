@@ -13256,7 +13256,7 @@ const owner = context.repo.owner;
 const repo = context.repo.repo;
 async function parse_options() {
     const options = {
-        prefix: core.getInput('prefix') || 'dependabot',
+        botname: core.getInput('botname') || 'dependabot',
         require_green: core.getInput('require_green') || 'true',
         combined_pr_name: core.getInput('combined_pr_name') || 'combined',
         ignore: core.getInput('ignore') || 'ignore',
@@ -13265,7 +13265,7 @@ async function parse_options() {
         day: core.getInput('day') || undefined,
         hour: parseInt(core.getInput('hour')) || undefined,
         wait: parseInt(core.getInput('wait')) || 1,
-        merge_dependabot_individually: core.getInput('merge_dependabot_individually') || 'false',
+        merge_individually: core.getInput('merge_individually') || 'false',
     };
     console.log(options);
     return options;
@@ -13302,14 +13302,15 @@ async function get_pull_requests() {
         }
     }
 }
-async function get_dependabot_pull_requests() {
+async function get_dependabot_pull_requests(options) {
     try {
         let pulls = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
             owner: owner,
             repo: repo,
             state: 'open',
         });
-        const dependabot_pull_requests = pulls.data.filter(pr => { var _a; return ((_a = pr.user) === null || _a === void 0 ? void 0 : _a.login) === 'dependabot[bot]'; });
+        const botname = options.botname + '[bot]';
+        const dependabot_pull_requests = pulls.data.filter(pr => { var _a; return ((_a = pr.user) === null || _a === void 0 ? void 0 : _a.login) === botname; });
         if (dependabot_pull_requests.length > 0) {
             // Dependabot has finished its run
             return dependabot_pull_requests;
@@ -13427,61 +13428,64 @@ async function create_combined_pull_request(options, combined_prs, base_branch) 
         pr_number = pull_request.data.number;
     }
     if (options.auto_merge_combined === 'true') {
-        await auto_merge_combined_pull_request(pr_number);
+        await auto_merge_combined_pull_request(options, pr_number);
     }
 }
-async function auto_merge_combined_pull_request(pr_number) {
-    try {
-        // Get the pull request
-        const pr = await octokit.pulls.get({
-            owner: owner,
-            repo: repo,
-            pull_number: pr_number
-        });
-        // Check if the pull request is mergeable
-        if (pr.data.mergeable) {
-            /*
-            // this creates an approved comment on the combined pull request
-            await octokit.pulls.createReview({
-              owner,
-              repo,
-              pull_number: pr_number,
-              event: 'APPROVE'
-            });
-            */
-            const merge_result = await octokit.pulls.merge({
+async function auto_merge_combined_pull_request(options, pr_number) {
+    let attempts = 0;
+    while (attempts < 5) {
+        try {
+            // Get the pull request
+            const pr = await octokit.pulls.get({
                 owner: owner,
                 repo: repo,
                 pull_number: pr_number
             });
-            if (merge_result.status === 204) {
-                console.log(`Pull request #${pr_number} merged successfully`);
-                // Get the individual Dependabot pull requests that were included in the combined pull request
-                const dependabotPullRequests = await get_dependabot_pull_requests();
-                // Close each individual pull request
-                for (const pull of dependabotPullRequests) {
-                    await octokit.pulls.update({
-                        owner: owner,
-                        repo: repo,
-                        pull_number: pull.number,
-                        state: 'closed'
-                    });
+            // Check if the pull request is mergeable
+            if (pr.data.mergeable) {
+                await octokit.pulls.updateBranch({
+                    owner,
+                    repo,
+                    pull_number: pr_number
+                });
+                const merge_result = await octokit.pulls.merge({
+                    owner: owner,
+                    repo: repo,
+                    pull_number: pr_number
+                });
+                if (merge_result.status === 204) {
+                    console.log(`Pull request #${pr_number} merged successfully`);
+                    // Get the individual Dependabot pull requests that were included in the combined pull request
+                    const dependabotPullRequests = await get_dependabot_pull_requests(options);
+                    // Close each individual pull request
+                    for (const pull of dependabotPullRequests) {
+                        await octokit.pulls.update({
+                            owner: owner,
+                            repo: repo,
+                            pull_number: pull.number,
+                            state: 'closed'
+                        });
+                    }
+                    return true;
                 }
-                return true;
+                else {
+                    console.log(`Failed to merge pull request #${pr_number}`);
+                    return false;
+                }
             }
             else {
-                console.log(`Failed to merge pull request #${pr_number}`);
+                console.log(`Pull request #${pr_number} is not mergeable`);
                 return false;
             }
         }
-        else {
-            console.log(`Pull request #${pr_number} is not mergeable`);
+        catch (error) {
+            if (error instanceof Error && error.message.includes("Base branch was modified")) {
+                attempts++;
+                continue;
+            }
+            console.log(`Error merging pull request #${pr_number}: ${error}`);
             return false;
         }
-    }
-    catch (error) {
-        console.log(`Error merging pull request #${pr_number}: ${error}`);
-        return false;
     }
 }
 async function merge_dependabot_prs_individually(options) {
@@ -13492,34 +13496,42 @@ async function merge_dependabot_prs_individually(options) {
         state: 'open'
     });
     for (const pull of pulls.data) {
-        // Only merge pull requests that have a branch name starting with the prefix specified in the options.prefix
-        if (!pull.head.ref.startsWith(options.prefix)) {
-            continue;
-        }
-        //Ignore ignored-label PRs
         let label = pull.head.label;
         if (label.toLowerCase().includes(options.ignore.toLowerCase())) {
             console.log("Ignored label");
             continue;
         }
-        if (pull.user && pull.user.login === 'dependabot[bot]') {
-            try {
-                await octokit.pulls.createReview({
-                    owner,
-                    repo,
-                    pull_number: pull.number,
-                    event: 'APPROVE'
-                });
-                await octokit.pulls.merge({
-                    owner,
-                    repo,
-                    pull_number: pull.number
-                });
-                core.info(`Merged pull request #${pull.number}`);
-            }
-            catch (error) {
-                if (error instanceof Error) {
+        const botname = options.botname + '[bot]';
+        if (pull.user && pull.user.login === botname) {
+            let attempts = 0;
+            while (attempts < 5) {
+                try {
+                    await octokit.pulls.createReview({
+                        owner,
+                        repo,
+                        pull_number: pull.number,
+                        event: 'APPROVE'
+                    });
+                    await octokit.pulls.updateBranch({
+                        owner,
+                        repo,
+                        pull_number: pull.number
+                    });
+                    await octokit.pulls.merge({
+                        owner,
+                        repo,
+                        pull_number: pull.number
+                    });
+                    core.info(`Merged pull request #${pull.number}`);
+                    break;
+                }
+                catch (error) {
+                    if (error instanceof Error && error.message.includes("Base branch was modified")) {
+                        attempts++;
+                        continue;
+                    }
                     core.setFailed(error.message);
+                    break;
                 }
             }
         }
@@ -13535,13 +13547,13 @@ async function main() {
     //wait 1 second so that pull requests will be green
     await delay(options.wait * 1000);
     const pulls = await get_pull_requests();
-    const dependabot_pulls = await get_dependabot_pull_requests();
+    const dependabot_pulls = await get_dependabot_pull_requests(options);
     if (pulls.length === 0) {
         return;
     }
     const base_sha = pulls[0].base.sha;
-    // If merge_dependabot_individually is true and the PR is from Dependabot, merge it individually
-    if (options.merge_dependabot_individually === 'true') {
+    // If merge_individually is true and the PR is from Dependabot, merge it individually
+    if (options.merge_individually === 'true') {
         await merge_dependabot_prs_individually(options);
         return;
     }
@@ -13549,10 +13561,10 @@ async function main() {
     let combined_prs = [];
     //might need to change this
     for (const pull of dependabot_pulls) {
-        // Only merge pull requests that have a branch name starting with the prefix specified in the options.prefix
-        if (!pull.head.ref.startsWith(options.prefix)) {
-            continue;
-        }
+        // Only merge pull requests that have a branch name starting with the prefix specified in the options.botname
+        //if (!pull.head.ref.startsWith(options.botname)) {
+        //  continue;
+        //}
         let label = pull.head.label;
         if (label.toLowerCase().includes(options.ignore.toLowerCase())) {
             console.log("Ignored label");
@@ -13572,7 +13584,7 @@ async function main() {
     const existing_prs = await check_if_combined_exists(options);
     if (existing_prs.data.length !== 0) {
         if (options.auto_merge_combined === 'true') {
-            await auto_merge_combined_pull_request(existing_prs.data[0].number);
+            await auto_merge_combined_pull_request(options, existing_prs.data[0].number);
         }
     }
 }
