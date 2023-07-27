@@ -195,7 +195,8 @@ async function create_combined_pull_request(options: Options, combined_prs: stri
     const existing_pr = existing_prs.data[0];
 
     // Get the existing body and append the new pull requests
-    let body = existing_pr.body + '\n' + combined_prs_string;
+    //let body = existing_pr.body + '\n' + combined_prs_string;
+    let body = 'This pull request contains the following pull requests:\n' + combined_prs_string;
 
     await octokit.pulls.update({
       owner: owner,
