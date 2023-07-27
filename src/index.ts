@@ -272,32 +272,8 @@ async function auto_merge_combined_pull_request(pr_number: number) {
   }
 }
 
-async function merge_individual_branch(options: Options, pull: any) {
-    try {
-        const merge_result = await octokit.pulls.merge({
-            owner: owner,
-            repo: repo,
-            pull_number: pull.number,
-        });
 
-        if ((merge_result.status as 200 | 204) === 204 && options.close_merged === 'true') {
-        //if ((merge_result.status === HTTP_STATUS_OK || merge_result.status === HTTP_STATUS_CREATED) && options.close_merged === 'true') {
-            await octokit.pulls.update({
-                owner: owner,
-                repo: repo,
-                pull_number: pull.number,
-                state: 'closed',
-            });
-        }
-        return true;
-    } catch (error) {
-        return false;
-    }
-}
-
-
-
-async function merge_dependabot_prs_individually() {
+async function merge_dependabot_prs_individually(options: Options) {
     const { owner, repo } = github.context.repo;
 
     const pulls = await octokit.pulls.list({
@@ -307,6 +283,20 @@ async function merge_dependabot_prs_individually() {
     });
     
     for (const pull of pulls.data) {
+        
+        
+        // Only merge pull requests that have a branch name starting with the prefix specified in the options.prefix
+        if (!pull.head.ref.startsWith(options.prefix)) {
+          continue;
+        }
+        //Ignore ignored-label PRs
+        let label = pull.head.label;
+        if (label.toLowerCase().includes(options.ignore.toLowerCase())) {
+          console.log("Ignored label");
+          continue;
+        }
+        
+        
         if (pull.user && pull.user.login === 'dependabot[bot]') {
             try {
                 await octokit.pulls.createReview({
@@ -354,31 +344,9 @@ async function main() {
   
   // If merge_dependabot_individually is true and the PR is from Dependabot, merge it individually
   if (options.merge_dependabot_individually === 'true') {
-    await merge_dependabot_prs_individually();
+    await merge_dependabot_prs_individually(options);
     return;
   }
-  
-  if (options.merge_dependabot_individually === 'true') {
-      for (const pull of dependabot_pulls) {
-        
-        // Only merge pull requests that have a branch name starting with the prefix specified in the options.prefix
-        if (!pull.head.ref.startsWith(options.prefix)) {
-          continue;
-        }
-        //Ignore ignored-label PRs
-        let label = pull.head.label;
-        if (label.toLowerCase().includes(options.ignore.toLowerCase())) {
-          console.log("Ignored label");
-          continue;
-        }
-            
-          if (options.merge_dependabot_individually === 'true' && pull.user?.login === 'dependabot[bot]') {
-              const merge_individual_success = await merge_individual_branch(options, pull);
-              console.log(merge_individual_success);
-          }
-      }
-      return;     
-  }  
   
   await create_combined_branch(options, base_sha);
 
