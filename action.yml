@@ -32,7 +32,7 @@ inputs:
     description: 'Run after a specific hour'
     required: false
   wait:
-    description: 'Wait n seconds before starting'
+    description: 'Wait N seconds before starting'
     required: false
   merge_dependabot_individually:
     description: 'Merge dependabot pull requests individually instead of combining'

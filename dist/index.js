@@ -13441,6 +13441,7 @@ async function auto_merge_combined_pull_request(pr_number) {
         // Check if the pull request is mergeable
         if (pr.data.mergeable) {
             /*
+            // this creates an approved comment on the combined pull request
             await octokit.pulls.createReview({
               owner,
               repo,
