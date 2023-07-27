@@ -40,7 +40,7 @@ jobs:
       - name: Combine dependabot pull requests
         uses: kuvaus/dependabot-group-merge-approve-action@v1
         with:
-          prefix: "dependabot" # Prefix to find the pull requests.
+          botname: "dependabot" # Name of the bot. E.g. dependabot or renovate
           require_green: "true" # Require the pull requests to be green
           combined_pr_name: "combined" # Branch name for the combined pull request
           ignore: "ignore" # Ignore pull requests with this name
@@ -49,7 +49,7 @@ jobs:
           day: "Monday" # Run on a specific day, any Monday
           hour: "16" # Run after a specific hour, 4 PM
           wait: "1" # Wait N seconds before starting
-          merge_dependabot_individually: "false" # Merge individually instead of combining
+          merge_individually: "false" # Merge individually instead of combining
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_KEY }}
 ```
@@ -106,6 +106,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_KEY }}
 ```
 
+#### Use on renovatebot instead of dependabot
+
+If you're using another bot, for example renovatebot, you can just change the `botname` parameter. The below script now searches the pull requests from `renovate[bot]` instead of `dependabot[bot]`. The action adds the `[bot]` suffix automatically.
+
+
+```yaml
+with:
+  botname: "renovate" # Name of the bot. E.g. dependabot or renovate
+```
 
 ## License
 
