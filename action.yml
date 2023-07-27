@@ -31,6 +31,9 @@ inputs:
   hour:
     description: 'Run after a specific hour'
     required: false
+  wait:
+    description: 'Wait n seconds before starting'
+    required: false
   merge_dependabot_individually:
     description: 'Merge dependabot pull requests individually instead of combining'
     required: false
@@ -65,6 +68,7 @@ runs:
         INPUT_AUTO_MERGE_COMBINED:           ${{ inputs.auto_merge_combined }}
         INPUT_DAY:                           ${{ inputs.day }}
         INPUT_HOUR:                          ${{ inputs.hour }}
+        INPUT_WAIT:                          ${{ inputs.wait }}
         INPUT_MERGE_DEPENDABOT_INDIVIDUALLY: ${{ inputs.merge_dependabot_individually }}
 
 

@@ -13264,6 +13264,7 @@ async function parse_options() {
         auto_merge_combined: core.getInput('auto_merge_combined') || 'false',
         day: core.getInput('day') || undefined,
         hour: parseInt(core.getInput('hour')) || undefined,
+        wait: parseInt(core.getInput('wait')) || 1,
         merge_dependabot_individually: core.getInput('merge_dependabot_individually') || 'false',
     };
     console.log(options);
@@ -13531,7 +13532,7 @@ async function main() {
         return;
     }
     //wait 1 second so that pull requests will be green
-    await delay(1000);
+    await delay(options.wait * 1000);
     const pulls = await get_pull_requests();
     const dependabot_pulls = await get_dependabot_pull_requests();
     if (pulls.length === 0) {
