@@ -1,7 +1,13 @@
 
 ## Changelog
 
-#### [Upcoming](https///github.com/kuvaus/dependabot-group-merge-approve-action/compare/v1.0.1...HEAD)
+#### [Upcoming](https///github.com/kuvaus/dependabot-group-merge-approve-action/compare/v2.0.0...HEAD)
+
+#### [v1.0.1](https://github.com/kuvaus/dependabot-group-merge-approve-action/releases/tag/v2.0.0)
+
+> 29 April 2024
+
+- Node 20 support
 
 #### [v1.0.1](https://github.com/kuvaus/dependabot-group-merge-approve-action/releases/tag/v1.0.1)
 
