@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Combine dependabot pull requests
-        uses: kuvaus/dependabot-group-merge-approve-action@v1
+        uses: kuvaus/dependabot-group-merge-approve-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_KEY }}
 ```
@@ -38,7 +38,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Combine dependabot pull requests
-        uses: kuvaus/dependabot-group-merge-approve-action@v1
+        uses: kuvaus/dependabot-group-merge-approve-action@v2
         with:
           botname: "dependabot" # Name of the bot. E.g. dependabot or renovate
           require_green: "true" # Require the pull requests to be green
@@ -71,7 +71,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Combine dependabot pull requests
-        uses: kuvaus/dependabot-group-merge-approve-action@v1
+        uses: kuvaus/dependabot-group-merge-approve-action@v2
         with:
           close_merged: "true"
           auto_merge_combined: "true"
@@ -99,7 +99,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Merge dependabot pull requests automatically
-        uses: kuvaus/dependabot-group-merge-approve-action@v1
+        uses: kuvaus/dependabot-group-merge-approve-action@v2
         with:
           merge_dependabot_individually: "true"
         env:

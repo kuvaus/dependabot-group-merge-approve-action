@@ -39,36 +39,5 @@ inputs:
     required: false
 
 # runs:
-#   using: node16
-#   main: dist/index.js
-
-
-# This part is temporary to enable Node 20 support
-
-runs:
-  using: composite
-  steps:
-
-    - name: Setup Node
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ inputs.node-version || '20' }}
-
-    - name: Action
-      run: |
-        node ${{ github.action_path }}/dist/index.js
-        echo "::set-output name=releasenotes::value1"
-      shell: ${{ (runner.os == 'Windows' && 'pwsh') || 'bash' }}
-      env:
-        INPUT_BOTNAME:                       ${{ inputs.botname }}
-        INPUT_REQUIRE_GREEN:                 ${{ inputs.require_green }}
-        INPUT_COMBINED_PR_NAME:              ${{ inputs.combined_pr_name }}
-        INPUT_IGNORE:                        ${{ inputs.ignore }}
-        INPUT_CLOSE_MERGED:                  ${{ inputs.close_merged }}
-        INPUT_AUTO_MERGE_COMBINED:           ${{ inputs.auto_merge_combined }}
-        INPUT_DAY:                           ${{ inputs.day }}
-        INPUT_HOUR:                          ${{ inputs.hour }}
-        INPUT_WAIT:                          ${{ inputs.wait }}
-        INPUT_MERGE_INDIVIDUALLY:            ${{ inputs.merge_individually }}
-
-
+   using: node20
+   main: dist/index.js
