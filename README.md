@@ -13,7 +13,7 @@ jobs:
     name: Combine dependabot pull requests
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Combine dependabot pull requests
         uses: kuvaus/dependabot-group-merge-approve-action@v2
         env:
@@ -36,7 +36,7 @@ jobs:
     name: Combine dependabot pull requests
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Combine dependabot pull requests
         uses: kuvaus/dependabot-group-merge-approve-action@v2
         with:
@@ -69,7 +69,7 @@ jobs:
     name: Combine dependabot pull requests
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Combine dependabot pull requests
         uses: kuvaus/dependabot-group-merge-approve-action@v2
         with:
@@ -97,7 +97,7 @@ jobs:
     name: Merge dependabot pull requests automatically
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Merge dependabot pull requests automatically
         uses: kuvaus/dependabot-group-merge-approve-action@v2
         with:

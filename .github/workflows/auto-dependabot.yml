@@ -10,7 +10,7 @@ jobs:
     name: Merge dependabot pull requests automatically
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Merge dependabot pull requests automatically
         uses: kuvaus/dependabot-group-merge-approve-action@v2
         with:
