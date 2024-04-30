@@ -1,9 +1,15 @@
 
 ## Changelog
 
-#### [Upcoming](https///github.com/kuvaus/dependabot-group-merge-approve-action/compare/v2.0.0...HEAD)
+#### [Upcoming](https///github.com/kuvaus/dependabot-group-merge-approve-action/compare/v2.0.1...HEAD)
 
-#### [v1.0.1](https://github.com/kuvaus/dependabot-group-merge-approve-action/releases/tag/v2.0.0)
+#### [v2.0.1](https://github.com/kuvaus/dependabot-group-merge-approve-action/releases/tag/v2.0.1)
+
+> 30 April 2024
+
+- Increase actions/checkout and actions/setup-node versions to v4
+
+#### [v2.0.0](https://github.com/kuvaus/dependabot-group-merge-approve-action/releases/tag/v2.0.0)
 
 > 29 April 2024
 
