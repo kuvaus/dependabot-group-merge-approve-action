@@ -1,7 +1,13 @@
 
 ## Changelog
 
-#### [Upcoming](https///github.com/kuvaus/dependabot-group-merge-approve-action/compare/v2.0.1...HEAD)
+#### [Upcoming](https///github.com/kuvaus/dependabot-group-merge-approve-action/compare/v2.0.2...HEAD)
+
+#### [v2.0.2](https://github.com/kuvaus/dependabot-group-merge-approve-action/releases/tag/v2.0.2)
+
+> 7 May 2024
+
+- Fix tags
 
 #### [v2.0.1](https://github.com/kuvaus/dependabot-group-merge-approve-action/releases/tag/v2.0.1)
 
